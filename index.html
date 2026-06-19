@@ -19,7 +19,7 @@
 
   <!-- STEP 02 | CSS読み込み（装飾の対応は css/style.css の逆参照コメント参照） -->
   <link rel="stylesheet" href="css/reset.css">
-  <link rel="stylesheet" href="css/style.css?v=7">
+  <link rel="stylesheet" href="css/style.css?v=10">
 </head>
 <body>
   <div class="app">
@@ -48,6 +48,7 @@
 
       <!-- 結論ファースト：傘いる？（はい/持って出かけて/いいえ）→ js/script.js STEP 24 -->
       <p class="verdict" id="verdict"></p>
+      <div class="today__icon" id="todayIcon"></div> <!-- 天気アイコン(SVG) STEP 24 -->
       <p class="today__temp" id="todayTemp"></p>     <!-- 現在気温（特大） -->
       <p class="today__wx"   id="todayWx"></p>       <!-- 天気（日本語ラベル） -->
       <p class="today__feel" id="todayFeel"></p>     <!-- 体感 -->
@@ -71,6 +72,6 @@
   <!-- STEP 07 | jQuery を読み込む -->
   <script src="js/jquery-2.1.3.min.js"></script>
   <!-- STEP 08 | アプリ本体 ＝【ファイル切替】続きは js/script.js の STEP 09 -->
-  <script src="js/script.js?v=9"></script>
+  <script src="js/script.js?v=10"></script>
 </body>
 </html>

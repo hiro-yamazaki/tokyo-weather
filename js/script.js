@@ -61,6 +61,28 @@ function wxColor(code) {
   return "#7a7a7a";
 }
 
+// STEP 11b | 部品：天気アイコン（自作SVG・カテゴリ別に色分け。絵文字でなく統一感のため）
+const WX_ICONS = {
+  sun:'<svg class="wxi" viewBox="0 0 64 64"><circle cx="32" cy="32" r="12" fill="#e8902c"/><g stroke="#e8902c" stroke-width="3.5" stroke-linecap="round"><line x1="32" y1="7" x2="32" y2="14"/><line x1="32" y1="50" x2="32" y2="57"/><line x1="7" y1="32" x2="14" y2="32"/><line x1="50" y1="32" x2="57" y2="32"/><line x1="15" y1="15" x2="20" y2="20"/><line x1="44" y1="44" x2="49" y2="49"/><line x1="49" y1="15" x2="44" y2="20"/><line x1="20" y1="44" x2="15" y2="49"/></g></svg>',
+  partly:'<svg class="wxi" viewBox="0 0 64 64"><circle cx="25" cy="23" r="9" fill="#e8902c"/><g stroke="#e8902c" stroke-width="3" stroke-linecap="round"><line x1="25" y1="6" x2="25" y2="10"/><line x1="8" y1="23" x2="12" y2="23"/><line x1="12" y1="10" x2="15" y2="13"/><line x1="38" y1="10" x2="35" y2="13"/></g><g fill="#9098a0"><circle cx="30" cy="42" r="10"/><circle cx="44" cy="38" r="13"/><rect x="26" y="42" width="28" height="12" rx="6"/></g></svg>',
+  cloud:'<svg class="wxi" viewBox="0 0 64 64"><g fill="#9098a0"><circle cx="24" cy="34" r="11"/><circle cx="40" cy="30" r="14"/><circle cx="47" cy="38" r="9"/><rect x="18" y="36" width="33" height="13" rx="6.5"/></g></svg>',
+  fog:'<svg class="wxi" viewBox="0 0 64 64"><g fill="#9098a0"><circle cx="24" cy="24" r="10"/><circle cx="40" cy="20" r="13"/><rect x="18" y="24" width="33" height="12" rx="6"/></g><g stroke="#9098a0" stroke-width="3.5" stroke-linecap="round"><line x1="16" y1="46" x2="48" y2="46"/><line x1="20" y1="55" x2="44" y2="55"/></g></svg>',
+  rain:'<svg class="wxi" viewBox="0 0 64 64"><g fill="#9098a0"><circle cx="24" cy="26" r="11"/><circle cx="40" cy="22" r="14"/><rect x="18" y="26" width="33" height="13" rx="6.5"/></g><g stroke="#2b6fb0" stroke-width="3.5" stroke-linecap="round"><line x1="25" y1="44" x2="22" y2="55"/><line x1="35" y1="44" x2="32" y2="55"/><line x1="45" y1="44" x2="42" y2="55"/></g></svg>',
+  snow:'<svg class="wxi" viewBox="0 0 64 64"><g fill="#9098a0"><circle cx="24" cy="26" r="11"/><circle cx="40" cy="22" r="14"/><rect x="18" y="26" width="33" height="13" rx="6.5"/></g><g fill="#5aa0d6"><circle cx="25" cy="50" r="3"/><circle cx="35" cy="54" r="3"/><circle cx="45" cy="50" r="3"/></g></svg>',
+  thunder:'<svg class="wxi" viewBox="0 0 64 64"><g fill="#9098a0"><circle cx="24" cy="24" r="11"/><circle cx="40" cy="20" r="14"/><rect x="18" y="24" width="33" height="13" rx="6.5"/></g><polygon points="34,38 24,53 31,53 28,62 41,45 33,45" fill="#7a5bb0"/></svg>',
+};
+function svgIcon(code) {
+  let cat = "cloud";
+  if (code === 0 || code === 1) cat = "sun";
+  else if (code === 2) cat = "partly";
+  else if (code === 3) cat = "cloud";
+  else if (code === 45 || code === 48) cat = "fog";
+  else if ([71,73,75,77,85,86].indexOf(code) >= 0) cat = "snow";
+  else if (code === 95 || code === 96 || code === 99) cat = "thunder";
+  else if (code >= 51) cat = "rain";
+  return WX_ICONS[cat];
+}
+
 // STEP 12 | 部品：状態メッセージ表示（→ index.html STEP 04）
 function setStatus(msg, isError) { $("#status").text(msg || "").toggleClass("is-error", !!isError); }
 
@@ -236,6 +258,9 @@ function renderDay() {
   $("#verdict").attr("class", "verdict " + u.cls)
     .html('<span class="v-q">' + q + '</span><span class="v-a">' + u.word + '</span><span class="v-note">' + u.note + '</span>');
 
+  // 天気アイコン（SVG・カテゴリ別の色）
+  $("#todayIcon").html(svgIcon(ctx.code));
+
   // 大きな気温：今日＝実況 / 他の日＝その日の最高（正午固定をやめた＝#4対応）
   const bigTemp = ctx.isToday ? DATA.current.temperature_2m : d.temperature_2m_max[ctx.sel];
   $("#todayTemp").text(r(bigTemp) + "°");
@@ -262,7 +287,7 @@ function renderDay() {
   );
 
   // チャート見出し（今日＝これから／他＝その日）＋折れ線チャート → STEP 25
-  $("#chartLabel").text(OFFSET === 0 ? "これから（気温と降水）" : (rel || mdLabel(ctx.date)) + "の気温と降水");
+  $("#chartLabel").text((rel || mdLabel(ctx.date)) + "の気温と降水");
   $("#hourChart").html(buildDayChart(ctx));
 }
 function pair(label, value) {
@@ -272,16 +297,11 @@ function pair(label, value) {
 
 // STEP 25 | buildDayChart（SVG）：気温＝折れ線（上）／降水確率＝折れ線+塗り（下）。3時間ごと8コマ。
 function buildDayChart(ctx) {
-  const h = DATA.hourly, COUNT = 8, STEP = 3;
+  const h = DATA.hourly, COUNT = 7, STEP = 3;
 
-  // 開始位置：今日＝今の時刻以降 / 他の日＝その日の0時から
-  let start = 0;
-  if (ctx.isToday) {
-    const now = new Date(DATA.current.time);
-    for (let i = 0; i < h.time.length; i++) { if (new Date(h.time[i]) >= now) { start = i; break; } }
-  } else {
-    const s = h.time.indexOf(ctx.date + "T00:00"); start = s >= 0 ? s : 0;
-  }
+  // 開始位置：毎日「朝6時」から固定
+  let start = h.time.indexOf(ctx.date + "T06:00");
+  if (start < 0) start = 0;
 
   const idx = [];
   for (let k = 0; k < COUNT; k++) { const i = start + k * STEP; if (i < h.time.length) idx.push(i); }
@@ -296,6 +316,15 @@ function buildDayChart(ctx) {
   const tyOf = function (t) { return tTop + (1 - (t - tmin) / (tmax - tmin)) * (tBot - tTop); };
   const pyOf = function (p) { return pBot - (p / 100) * (pBot - pTop); };
 
+  // 現在時刻マーカー（今日のみ・朝6時を起点とした位置）
+  let nowFrac = -1;
+  if (ctx.isToday && idx.length > 0) {
+    const startT = new Date(ctx.date + "T06:00"), nowT = new Date(DATA.current.time);
+    const f = ((nowT - startT) / 3600000) / STEP;     // 目盛り単位での現在位置
+    if (f >= 0 && f <= idx.length - 1) nowFrac = f;
+  }
+  const nearestK = nowFrac >= 0 ? Math.round(nowFrac) : -1;
+
   let tLine = "", tDots = "", tLabels = "", pLine = "", pPts = "", pLabels = "", times = "";
   idx.forEach(function (i, k) {
     const cx = xOf(k), ty = tyOf(temps[k]), py = pyOf(pops[k]);
@@ -305,9 +334,18 @@ function buildDayChart(ctx) {
     pLine   += (k === 0 ? "M" : "L") + cx.toFixed(1) + " " + py.toFixed(1) + " ";
     pPts    += cx.toFixed(1) + " " + py.toFixed(1) + " ";
     pLabels += '<text x="' + cx + '" y="' + (py - 7).toFixed(1) + '" text-anchor="middle" font-size="10" font-weight="700" fill="#1a1a1a">' + pops[k] + '%</text>';
-    times   += '<text x="' + cx + '" y="180" text-anchor="middle" font-size="11" fill="#9098a0">' + hourLabel(h.time[i]) + '</text>';
+    var tRed = (k === nearestK);   // 現在時刻に最も近い目盛りは赤
+    times   += '<text x="' + cx + '" y="180" text-anchor="middle" font-size="11"' + (tRed ? ' font-weight="700"' : '') + ' fill="' + (tRed ? '#d83a2a' : '#9098a0') + '">' + hourLabel(h.time[i]) + '</text>';
   });
   const area = "M " + xOf(0).toFixed(1) + " " + pBot + " L " + pPts + "L " + xOf(idx.length - 1).toFixed(1) + " " + pBot + " Z";
+
+  // 現在時刻の赤い縦線＋「今」（今日のみ）
+  let nowMark = "";
+  if (nowFrac >= 0) {
+    const nx = (padL + nowFrac * stepX).toFixed(1);
+    nowMark = '<line x1="' + nx + '" y1="22" x2="' + nx + '" y2="' + pBot + '" stroke="#d83a2a" stroke-width="1.4" stroke-dasharray="3 3"/>'
+      + '<text x="' + nx + '" y="13" text-anchor="middle" font-size="11" font-weight="700" fill="#d83a2a">今</text>';
+  }
 
   return '<div class="legend"><span class="lg lg--t">気温</span><span class="lg lg--p">降水確率</span></div>'
     + '<svg viewBox="0 0 320 188" role="img" aria-label="気温と降水確率の折れ線グラフ">'
@@ -315,7 +353,7 @@ function buildDayChart(ctx) {
     + '<path d="' + area + '" fill="#dceaf7"/>'
     + '<path d="' + pLine + '" fill="none" stroke="#2b6fb0" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'
     + '<path d="' + tLine + '" fill="none" stroke="#e0843c" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'
-    + tDots + tLabels + pLabels + times
+    + tDots + tLabels + pLabels + times + nowMark
     + '</svg>';
 }
 

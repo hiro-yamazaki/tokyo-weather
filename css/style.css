@@ -68,7 +68,10 @@ body {
 
 /* 近接：日付→気温→天気→体感 は1つの塊として近づける */
 .today__date { font-size: 14px; color: var(--ink-2); }
-.today__temp { font-size: 88px; font-weight: 200; line-height: 1; letter-spacing: -.03em; margin: var(--s3) 0 0; }
+/* 天気アイコン（SVG・カテゴリ別の色） */
+.today__icon { display: flex; justify-content: center; margin-top: var(--s2); }
+.today__icon .wxi { width: 58px; height: 58px; display: block; }
+.today__temp { font-size: 88px; font-weight: 200; line-height: 1; letter-spacing: -.03em; margin: var(--s2) 0 0; }
 .today__wx   { font-size: 22px; font-weight: 800; margin-top: var(--s2); }
 .today__feel { font-size: 14px; color: var(--ink-2); margin-top: var(--s2); }
 /* 朝/昼/夜の気温（正午固定をやめ、時間帯の推移が分かるように） */
