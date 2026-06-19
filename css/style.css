@@ -1,0 +1,146 @@
+/* =======================================================================
+   お天気グランス（東京・6区） / style.css
+   -----------------------------------------------------------------------
+   方針：白地ベースに「意味のある色」を点で使う（気温＝寒暖色／降水＝青／曜日）。
+        気温・降水はグラフで認知。余白は8px基準のリズムで、関連は近く・群は離す。
+   CSSは見た目担当なのでSTEP番号は振らず「→ index.html STEP◯◯」を付す。
+   ======================================================================= */
+
+:root {
+  --ink:   #1a1a1a;  --ink-2: #5c5c5c;  --ink-3: #9098a0;
+  --line:  #e6e8eb;  --surface:#ffffff; --bg: #eef1f4;
+  --accent:#2b6fb0;                       /* 選択・降水の基準青 */
+  /* 8px基準の余白リズム（認知負荷を下げる一定リズム） */
+  --s1: 4px; --s2: 8px; --s3: 16px; --s4: 24px; --s5: 32px;
+}
+
+body {
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+  color: var(--ink); background: var(--bg); min-height: 100vh;
+  -webkit-font-smoothing: antialiased; font-feature-settings: "palt";
+  font-variant-numeric: tabular-nums;            /* 数字幅を揃え整列＝把握しやすく */
+}
+.app { width: 100%; max-width: 460px; margin: 0 auto; padding: 0 var(--s3) var(--s5); }
+
+/* ---- ヘッダー（→ index.html STEP 03） ---- */
+.head { padding: var(--s4) 2px var(--s2); }
+.head__area { font-size: 22px; font-weight: 800; letter-spacing: .08em; }
+
+/* ---- 区の選択ボタン（→ index.html STEP 03b / #wards） ---- */
+.wards {
+  display: flex; flex-wrap: wrap; gap: 6px;          /* 折り返して6区すべて見せる */
+  padding: 2px 2px var(--s2);
+}
+.ward-btn {
+  flex: 0 0 auto; font-size: 13px; font-weight: 700; color: var(--ink-2);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 999px; padding: 7px 12px; cursor: pointer;
+  transition: all .12s;
+}
+.ward-btn.is-active { color: #fff; background: var(--ink); border-color: var(--ink); }
+
+/* ---- 状態メッセージ（→ index.html STEP 04） ---- */
+.status { text-align: center; min-height: 18px; font-size: 13px; color: var(--ink-2); margin: var(--s1) 0; }
+.status.is-error { color: #c0392b; font-weight: 700; }
+
+/* セクション見出し（→ .sec-label）：群の境目。上に広め・下に細線 */
+.sec-label {
+  font-size: 12px; font-weight: 700; letter-spacing: .14em; color: var(--ink-3);
+  margin: var(--s4) 2px var(--s2); padding-bottom: var(--s2); border-bottom: 1px solid var(--line);
+}
+
+/* ---- 「今日」（→ index.html STEP 05 / #today） ---- */
+.today {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+  padding: var(--s4) var(--s4) var(--s3); text-align: center;
+}
+/* 日付ステッパー：◀ 今日 6/19（金） ▶（→ index.html / .daynav） */
+.daynav { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.daynav__label { font-size: 15px; font-weight: 800; color: var(--ink); min-width: 9.5em; text-align: center; }
+.daynav__arw {
+  width: 36px; height: 36px; flex: 0 0 auto; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+  font-size: 13px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.daynav__arw:active { background: #eef1f4; }
+.daynav__arw.is-off { opacity: .25; pointer-events: none; }   /* 端（昨日/6日先）で無効化 */
+
+/* 近接：日付→気温→天気→体感 は1つの塊として近づける */
+.today__date { font-size: 14px; color: var(--ink-2); }
+.today__temp { font-size: 88px; font-weight: 200; line-height: 1; letter-spacing: -.03em; margin: var(--s3) 0 0; }
+.today__wx   { font-size: 22px; font-weight: 800; margin-top: var(--s2); }
+.today__feel { font-size: 14px; color: var(--ink-2); margin-top: var(--s2); }
+/* 朝/昼/夜の気温（正午固定をやめ、時間帯の推移が分かるように） */
+.partsofday { font-size: 13px; color: var(--ink-2); margin-top: var(--s3); }
+.partsofday b { color: var(--ink); font-weight: 800; }
+/* 結論ファースト：傘いる？ バナー（はい/持って出かけて/いいえ） */
+.verdict { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; margin: var(--s2) 0 0; font-size: 14px; }
+.verdict .v-q { color: var(--ink-2); }
+.verdict .v-a { font-weight: 800; }
+.verdict .v-note { font-size: 12px; color: var(--ink-3); }
+.verdict.v-yes   .v-a { color: #1b5a96; }
+.verdict.v-maybe .v-a { color: #3d82bf; }
+.verdict.v-no    .v-a { color: #6b7280; }
+
+/* 指標：意味で2群に分ける（近接の法則）。数字は黒、ラベルとの間に呼吸（余白）を確保。
+   ・hilo＝気温群（最高/最低）  ・cond＝状況群（雨/湿度/風） */
+.hilo, .cond { display: grid; gap: 10px; }
+.hilo { grid-template-columns: repeat(2, 1fr); margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--line); }
+.cond { grid-template-columns: repeat(3, 1fr); margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--line); }
+.metric { display: flex; flex-direction: column; align-items: center; gap: 9px; } /* ← ラベルと数値の余白 */
+.metric .lbl { font-size: 11px; letter-spacing: .16em; color: var(--ink-3); }
+.metric .val { font-weight: 800; color: var(--ink); }     /* 数字は黒 */
+.hilo .val { font-size: 27px; }                            /* 気温は主役＝大きく */
+.cond .val { font-size: 19px; }
+
+/* ---- チャート枠（→ index.html STEP 24 / #hourChart）凡例＋SVG ---- */
+.chart { width: 100%; }
+.chart svg { width: 100%; height: auto; display: block; }
+/* 凡例：どの折れ線が「気温／降水確率」か明示（線と同色） */
+.legend { display: flex; justify-content: center; gap: 18px; margin-bottom: 2px; font-size: 11px; }
+.legend .lg { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
+.legend .lg::before { content: ""; width: 16px; height: 3px; border-radius: 2px; background: currentColor; }
+.legend .lg--t { color: #e0843c; }   /* 気温＝橙 */
+.legend .lg--p { color: #2b6fb0; }   /* 降水＝青 */
+
+/* ---- 「今週」（→ index.html STEP 06 / #weekList） ---- */
+.week__list { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+
+/* 見出し行（列の意味を明示）。.day のグリッドをそのまま使う */
+.day--head { padding-top: 10px; padding-bottom: 10px; }
+.day--head .h { font-size: 11px; color: var(--ink-3); letter-spacing: .12em; }
+
+/* 1日の行：曜日 | 天気 | 気温レンジ(最低 バー 最高) | 気温差 | 降水
+   気温は短めのレンジバーで比較、気温差（日較差）を数値で併記 */
+.day {
+  display: grid;
+  grid-template-columns: 2.8em 2.0em 1fr 3em 3.2em;
+  align-items: center; gap: 9px;
+  padding: 16px var(--s3); border-bottom: 1px solid var(--line);
+}
+.day:last-child { border-bottom: none; }
+.day.is-today { background: #f1f5f9; }
+.day__name { font-size: 15px; font-weight: 800; }            /* 色はJSで曜日別に */
+.day__name small { display: block; font-size: 11px; font-weight: 400; color: var(--ink-3); }
+.day__wx   { font-size: 14px; font-weight: 700; text-align: center; }  /* 色はJSで天気別に */
+
+/* 気温レンジ：最低 [短めのバー] 最高（数字は黒系統） */
+.day__range { display: flex; align-items: center; gap: 7px; }
+.day__lo { font-size: 12px; font-weight: 400; color: var(--ink-2); }
+.day__hi { font-size: 15px; font-weight: 800; color: var(--ink); }
+.day__bar { position: relative; flex: 1; height: 7px; background: var(--line); border-radius: 4px; }
+.day__bar i { position: absolute; top: 0; height: 100%; border-radius: 4px; }
+/* 気温差（日較差）＝その日の最高−最低 */
+.day__diff { font-size: 13px; font-weight: 700; color: var(--ink-2); text-align: center; }
+
+/* 降水：数字は黒、量は青バーで前注意的に（「傘いる？」を一目で） */
+.day__pop { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.day__pop b { font-size: 13px; font-weight: 800; color: var(--ink); }
+.day__pop .pbar { width: 100%; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.day__pop .pbar i { display: block; height: 100%; }
+
+.foot { text-align: center; font-size: 11px; color: var(--ink-3); margin-top: var(--s4); }
+.foot a { color: var(--ink-2); }
+
+@media (min-width: 400px) { .today__temp { font-size: 96px; } }

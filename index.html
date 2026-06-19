@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<!-- =======================================================================
+     お天気グランス（東京版） / index.html
+     -----------------------------------------------------------------------
+     コンセプト：東京の天気を「とことん見やすく・把握しやすく」。
+     完全グレースケール／天気は日本語ラベルで表示／23区を選択可能。
+
+     【このファイルの担当 STEP：01〜08】上から読む順がSTEP番号。
+     最後に script.js を読み込み、続きは js/script.js の STEP 09 へ。
+     ★STEP番号＝実際に動く順。ファイルをまたぐ所は「→ STEP◯◯」で橋渡し。
+     ======================================================================= -->
+<html lang="ja">
+<head>
+  <!-- STEP 01 | 基本設定（文字コード・スマホ表示幅・タイトル） -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#1a1a1a">
+  <title>東京の天気</title>
+
+  <!-- STEP 02 | CSS読み込み（装飾の対応は css/style.css の逆参照コメント参照） -->
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/style.css?v=7">
+</head>
+<body>
+  <div class="app">
+
+    <!-- STEP 03 | ヘッダー：地域は東京固定 -->
+    <header class="head">
+      <span class="head__area">東京</span>
+    </header>
+
+    <!-- STEP 03b | 区の選択ボタン（6区・ドロップダウンではなく見える選択式）
+                    ボタンを押すと天気を取り直す → js/script.js STEP 27
+                    ボタン自体は js/script.js STEP 14 で生成 -->
+    <div class="wards" id="wards" role="tablist" aria-label="区を選択"></div>
+
+    <!-- STEP 04 | 状態メッセージ（取得中・エラー）。書き込みは js/script.js STEP 12 -->
+    <p class="status" id="status"></p>
+
+    <!-- STEP 05 | ＝＝＝「今日」＝＝＝ 現在の天気を大きく。中身は js/script.js STEP 21・22 -->
+    <section class="today" id="today" hidden>
+      <!-- 日付ステッパー：◀=前日 / ▶=翌日（#today上で左右スワイプも可）→ js/script.js STEP 23 -->
+      <div class="daynav">
+        <button type="button" class="daynav__arw" id="prevDay" aria-label="前の日へ">◀</button>
+        <p class="daynav__label" id="dayLabel"></p>
+        <button type="button" class="daynav__arw" id="nextDay" aria-label="次の日へ">▶</button>
+      </div>
+
+      <!-- 結論ファースト：傘いる？（はい/持って出かけて/いいえ）→ js/script.js STEP 24 -->
+      <p class="verdict" id="verdict"></p>
+      <p class="today__temp" id="todayTemp"></p>     <!-- 現在気温（特大） -->
+      <p class="today__wx"   id="todayWx"></p>       <!-- 天気（日本語ラベル） -->
+      <p class="today__feel" id="todayFeel"></p>     <!-- 体感 -->
+      <p class="partsofday" id="partsOfDay"></p>     <!-- 朝/昼/夜の気温 STEP 24 -->
+      <div class="hilo" id="hilo"></div>             <!-- 気温群：最高/最低（現在気温の近接）STEP 23 -->
+      <div class="cond" id="cond"></div>             <!-- 状況群：雨/湿度/風 STEP 23 -->
+
+      <p class="sec-label" id="chartLabel">これから（気温と降水）</p>
+      <div class="chart" id="hourChart"></div>       <!-- 今日の時間別チャート(SVG) STEP 24 -->
+    </section>
+
+    <!-- STEP 06 | ＝＝＝「今週」＝＝＝ 7日テーブル。1日ずつ append は js/script.js STEP 23 -->
+    <section class="week" id="week" hidden>
+      <p class="sec-label">今週</p>
+      <ul class="week__list" id="weekList"></ul>
+    </section>
+
+    <footer class="foot">データ: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a></footer>
+  </div>
+
+  <!-- STEP 07 | jQuery を読み込む -->
+  <script src="js/jquery-2.1.3.min.js"></script>
+  <!-- STEP 08 | アプリ本体 ＝【ファイル切替】続きは js/script.js の STEP 09 -->
+  <script src="js/script.js?v=7"></script>
+</body>
+</html>
