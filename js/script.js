@@ -194,10 +194,28 @@ function tempAtHour(date, hour) {
   return i >= 0 ? DATA.hourly.temperature_2m[i] : null;
 }
 
-// 「傘いる？」の3パターン判定（その日の最大降水確率で）
-function umbrella(pop) {
+// 「傘いる？」の3パターン判定
+//  今日 ＝「いま雨か」→はい / 「今は降ってないが今日のうちに雨か」→持っていって / それ以外→いいえ
+//  今日以外（“いま”が無い）＝その日の最大降水確率で判定
+function umbrellaVerdict() {
+  if (OFFSET === 0) {
+    const c = DATA.current;
+    if (c.weather_code >= 51) return { word: "はい", note: "いま雨が降っています", cls: "v-yes" }; // 雨/雪/雷など
+    // 今日の残り時間の最大降水確率（これから雨が降るか）
+    const h = DATA.hourly, now = new Date(c.time), today = c.time.slice(0, 10);
+    let maxPop = 0;
+    for (let i = 0; i < h.time.length; i++) {
+      if (h.time[i].slice(0, 10) === today && new Date(h.time[i]) >= now && h.precipitation_probability[i] > maxPop) {
+        maxPop = h.precipitation_probability[i];
+      }
+    }
+    if (maxPop >= 50) return { word: "持っていって", note: "今は降っていませんが、のち雨の予報", cls: "v-maybe" };
+    return { word: "いいえ", note: "雨の心配は少なめ", cls: "v-no" };
+  }
+  // 今日以外：その日の最大降水確率で
+  const pop = DATA.daily.precipitation_probability_max[TODAY_IDX + OFFSET];
   if (pop >= 60) return { word: "はい",           note: "雨の可能性が高い", cls: "v-yes" };
-  if (pop >= 30) return { word: "持って出かけて", note: "にわか雨に注意",   cls: "v-maybe" };
+  if (pop >= 30) return { word: "持っていって",   note: "にわか雨に注意",   cls: "v-maybe" };
   return                  { word: "いいえ",         note: "傘は不要",         cls: "v-no" };
 }
 
@@ -212,8 +230,8 @@ function renderDay() {
   $("#prevDay").toggleClass("is-off", OFFSET <= MIN_OFFSET);
   $("#nextDay").toggleClass("is-off", OFFSET >= MAX_OFFSET);
 
-  // 結論ファースト：いま傘いる？（その日の最大降水確率から3パターン。今日以外は日名で）
-  const u = umbrella(d.precipitation_probability_max[ctx.sel]);
+  // 結論ファースト：いま傘いる？（いま雨/のち雨/不要の3パターン。今日以外は降水確率で）
+  const u = umbrellaVerdict();
   const q = OFFSET === 0 ? "いま傘いる？" : (rel || mdLabel(ctx.date)) + "傘いる？";
   $("#verdict").attr("class", "verdict " + u.cls)
     .html('<span class="v-q">' + q + '</span><span class="v-a">' + u.word + '</span><span class="v-note">' + u.note + '</span>');
